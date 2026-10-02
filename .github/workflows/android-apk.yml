@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -39,3 +41,11 @@ jobs:
         with:
           name: mindvora-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
+      - name: Publish APK as the latest release (download link for the website)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          APK=$(ls android/app/build/outputs/apk/debug/*.apk | head -1)
+          cp "$APK" mindvora.apk
+          TAG="build-${{ github.run_number }}"
+          gh release create "$TAG" mindvora.apk --title "Mindvora Android (build ${{ github.run_number }})" --notes "Automatic build from ${{ github.sha }}" --latest
