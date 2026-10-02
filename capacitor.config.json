@@ -15,5 +15,6 @@
         "alert"
       ]
     }
-  }
+  },
+  "appendUserAgent": "MindvoraApp/3.0.0"
 }
