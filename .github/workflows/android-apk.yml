@@ -37,20 +37,41 @@ jobs:
           echo "App version $V"
       - name: Copy app settings into Android
         run: npx cap sync android
-      - name: Build debug APK
+      - name: Build signed APK (permanent Mindvora key)
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/mindvora-release.jks"
+            export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/mindvora-release.jks"
+            ./gradlew assembleRelease --no-daemon --stacktrace
+            mkdir -p ../out && cp app/build/outputs/apk/release/*.apk ../out/
+          else
+            echo "No signing key secret - building a debug APK instead"
+            ./gradlew assembleDebug --no-daemon --stacktrace
+            mkdir -p ../out && cp app/build/outputs/apk/debug/*.apk ../out/
+          fi
+          ls -la ../out
+      - name: Check the APK has the voice + notification parts
+        run: |
+          APK=$(ls out/*.apk | head -1)
+          unzip -p "$APK" assets/capacitor.plugins.json | tee /dev/stderr | grep -q SpeechRecognition
+          unzip -p "$APK" assets/capacitor.plugins.json | grep -q PushNotifications
+          "$ANDROID_HOME"/build-tools/35.0.0/apksigner verify --print-certs "$APK" | head -3
       - uses: actions/upload-artifact@v4
         with:
-          name: mindvora-debug-apk
-          path: android/app/build/outputs/apk/debug/*.apk
+          name: mindvora-apk
+          path: out/*.apk
       - name: Publish APK as the latest release (download link for the website)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          APK=$(ls android/app/build/outputs/apk/debug/*.apk | head -1)
+          APK=$(ls out/*.apk | head -1)
           cp "$APK" mindvora.apk
           TAG="build-${{ github.run_number }}"
-          gh release create "$TAG" mindvora.apk --title "Mindvora Android (build ${{ github.run_number }})" --notes "Automatic build from ${{ github.sha }}" --latest
+          gh release create "$TAG" mindvora.apk --title "Mindvora Android (build ${{ github.run_number }})" --notes "Mindvora for Android. Automatic build from ${{ github.sha }}. Signed with the permanent Mindvora key." --latest
