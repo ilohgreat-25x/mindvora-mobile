@@ -16,7 +16,10 @@
 			]
 		}
 	},
+	"appendUserAgent": "MindvoraApp/3.0.0",
 	"packageClassList": [
+		"BiometricAuthNative",
+		"SpeechRecognition",
 		"PushNotificationsPlugin"
 	]
 }

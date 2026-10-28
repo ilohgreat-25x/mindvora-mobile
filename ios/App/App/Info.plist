@@ -6,6 +6,8 @@
 	<string>Mindvora uses your camera for video calls and going live.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Mindvora uses your microphone for calls and live streams.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Mindvora uses Face ID to unlock the app after you enable biometrics in App Lock settings.</string>
 	<key>UIBackgroundModes</key>
 	<array><string>remote-notification</string><string>audio</string><string>voip</string></array>
 	<key>CFBundleDevelopmentRegion</key>

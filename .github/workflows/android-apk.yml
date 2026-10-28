@@ -57,11 +57,12 @@ jobs:
             mkdir -p ../out && cp app/build/outputs/apk/debug/*.apk ../out/
           fi
           ls -la ../out
-      - name: Check the APK has the voice + notification parts
+      - name: Check the APK has voice, notifications, and biometric authentication
         run: |
           APK=$(ls out/*.apk | head -1)
           unzip -p "$APK" assets/capacitor.plugins.json | tee /dev/stderr | grep -q SpeechRecognition
           unzip -p "$APK" assets/capacitor.plugins.json | grep -q PushNotifications
+          unzip -p "$APK" assets/capacitor.plugins.json | grep -q BiometricAuthNative
           "$ANDROID_HOME"/build-tools/35.0.0/apksigner verify --print-certs "$APK" | head -3
       - uses: actions/upload-artifact@v4
         with:
